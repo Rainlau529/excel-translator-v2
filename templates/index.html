@@ -97,7 +97,7 @@
       setPercent(p){ card.querySelector('.progress-fill').style.width = (p||0) + '%'; },
       setETA(s){ card.querySelector('.task-eta').textContent = s || ''; },
       setDownload(url){
-        card.querySelector('.task-actions').innerHTML = `<a class="download-btn" href="${url}">📥 下载翻译结果</a>`;
+        card.querySelector('.task-actions').innerHTML = `<a class="download-btn" href="${url}" download>📥 下载翻译结果</a>`;
       },
       showError(msg){
         card.querySelector('.task-actions').innerHTML = `<div class="error">${msg}</div>`;
