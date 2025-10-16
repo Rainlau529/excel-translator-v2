@@ -187,5 +187,5 @@ def progress(task_id):
 @app.route('/tasks/<task_id>', methods=['GET'])
 def task_status(task_id):
     st = _get_state(task_id)
-    return jsonify(st) if st else (jsonify({'error': '任务不存在'}), 404
+    return jsonify(st) if st else (jsonify({'error': '任务不存在'}), 404)
 
