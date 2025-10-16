@@ -86,8 +86,8 @@ def _run_task(file_path: str, task_id: str):
         # 4. 分页参数
         BATCH = 20
         start = time.time()
-        output_path = os.path.join(tempfile.gettempdir(),
-                                   os.path.splitext(os.path.basename(file_path))[0] + "_中文翻译.xlsx")
+        # ✅ 改到持久目录 /tmp
+        output_path = os.path.join("/tmp", os.path.splitext(os.path.basename(file_path))[0] + "_中文翻译.xlsx")
 
         for batch_start in range(0, total, BATCH):
             if _get_state(task_id).get("cancel_requested"):
@@ -202,3 +202,11 @@ def progress(task_id):
 def task_status(task_id):
     st = _get_state(task_id)
     return jsonify(st) if st else (jsonify({'error': '任务不存在'}), 404)
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    # 文件已保存在 /tmp，直接发送
+    file_path = os.path.join("/tmp", filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True, download_name=filename)
+    return "文件不存在", 404
