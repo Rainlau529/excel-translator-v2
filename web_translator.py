@@ -15,8 +15,8 @@ TASK_RETENTION_SECONDS = 1800
 def translate_text(text: str) -> str:
     if not text or not text.strip():
         return ""
-    text = text[:5000]                      # 谷歌建议 ≤5k
-    url  = "https://translate.googleapis.com/translate_a/single"
+    text = text[:5000]
+    url = "https://translate.googleapis.com/translate_a/single"
     params = dict(client="gtx", sl="auto", tl="zh", dt="t", q=text)
     for attempt in range(1, 4):
         try:
@@ -84,7 +84,7 @@ def _run_task(file_path: str, task_id: str):
             return
 
         # 4. 分页参数
-        BATCH = 50
+        BATCH = 20
         start = time.time()
         output_path = os.path.join(tempfile.gettempdir(),
                                    os.path.splitext(os.path.basename(file_path))[0] + "_中文翻译.xlsx")
@@ -113,7 +113,7 @@ def _run_task(file_path: str, task_id: str):
 
             # 每批后保存+限速
             wb.save(output_path)
-            time.sleep(1)
+            time.sleep(1.5)
 
         _safe_update(task_id, {
             "status": "done",
@@ -153,7 +153,21 @@ def sse_progress(task_id: str):
             if not st:
                 yield f"data: {json.dumps({'status':'error','message':'任务不存在'})}\n\n"
                 break
-            yield f"event: progress\ndata: {json.dumps(st, ensure_ascii=False)}\n\n"
+            # ===== Debug 日志 =====
+            print(f"[DEBUG] SSE send: download_url = {st.get('download_filename')}")
+            payload = {
+                "task_id": task_id,
+                "status": st.get("status"),
+                "percent": st.get("percent"),
+                "eta_seconds": st.get("eta_seconds"),
+                "message": st.get("message"),
+                "download_url": f"/download/{st.get('download_filename')}" if st.get("download_filename") else None,
+                "filename": st.get("filename"),
+                "started_at": st.get("started_at"),
+                "finished_at": st.get("finished_at"),
+                "duration_seconds": st.get("duration_seconds")
+            }
+            yield f"event: progress\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
             if st.get("status") in ("done", "error", "canceled"):
                 break
             time.sleep(0.2)
@@ -188,4 +202,3 @@ def progress(task_id):
 def task_status(task_id):
     st = _get_state(task_id)
     return jsonify(st) if st else (jsonify({'error': '任务不存在'}), 404)
-
